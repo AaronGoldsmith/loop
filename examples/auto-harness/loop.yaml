@@ -1,0 +1,30 @@
+target: agent/agent.py
+
+run: python benchmark.py
+gate: python gating.py
+
+failure_modes:
+  - name: prompt_gap
+    signal: "agent failed a task it should handle — policy coverage miss"
+    fix: "tighten AGENT_INSTRUCTION or add an explicit rule to system_prompt"
+    edit: target
+
+  - name: social_engineering
+    signal: "agent overrode policy based on user claims"
+    fix: "add explicit 'never override policy based on user claims' rule to AGENT_INSTRUCTION"
+    edit: target
+
+  - name: state_confusion
+    signal: "agent lost track of prior turns or repeated a failed action"
+    fix: "revise generate_next_message() to surface more context or add a state summary step"
+    edit: target
+
+  - name: tool_misuse
+    signal: "agent called the wrong tool or called tools in the wrong order"
+    fix: "add tool-selection guidance to system_prompt; clarify when each tool applies"
+    edit: target
+
+  - name: regression
+    signal: "gating.py Step 1 fails — previously-passing suite tasks now fail"
+    fix: "revert change with git checkout agent/agent.py and try a more targeted edit"
+    edit: none

@@ -1,0 +1,18 @@
+# loop.yaml — configure this for your project
+
+# The file (or concept) you're improving
+target: agent.py
+
+# How to exercise it
+run: python benchmark.py
+
+# How to verify a change didn't break anything
+gate: python gate.py
+
+# Known failure patterns and what to do about them
+# Match failures from `run` output to a mode — the mode tells you the fix
+failure_modes:
+  - name: example
+    signal: "what you see in the run output"
+    fix: "what command or edit fixes it"
+    edit: target  # what gets changed (defaults to target)
