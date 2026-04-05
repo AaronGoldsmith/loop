@@ -1,0 +1,50 @@
+target: model.scad
+
+run: |
+  bash bin/scad-validate.sh model.scad
+  bash bin/scad-render-tiled.sh model.scad output/preview.png
+
+gate: |
+  bash bin/scad-cross-section.sh model.scad output/cross_section.png
+  bash bin/scad-export-stl.sh model.scad output/model.stl
+
+failure_modes:
+  - name: syntax_error
+    signal: "WARNING, ERROR, or empty render from scad-validate.sh"
+    fix: "output the COMPLETE .scad file — never partial edits or diffs"
+    edit: target
+
+  - name: fused_geometry
+    signal: "cross-section shows solid circle where there should be a ring (pin inside barrel)"
+    fix: "add explicit difference() clearance: radial (0.3-0.4mm per side) AND axial gaps between knuckles"
+    edit: target
+
+  - name: disconnected_parts
+    signal: "iso render shows two pieces floating near each other but not connected"
+    fix: "define entire side profile as one 2D polygon, linear_extrude once — never union() separate bodies"
+    edit: target
+
+  - name: bad_base
+    signal: "front/side view silhouette gets wider going up from the base"
+    fix: "add a flat pedestal wider than the widest body point, or reshape to egg/teardrop (widest at bottom)"
+    edit: target
+
+  - name: slicer_merge
+    signal: "slicer toolpath runs continuously across parts that should be separate"
+    fix: "each part must difference() away the other part's volume + clearance; export separate STLs"
+    edit: target
+
+  - name: slow_render
+    signal: "render takes >5 seconds per angle during iteration"
+    fix: "set $fn=24 for iteration; only use $fn=60 for final export; use --preview not --render"
+    edit: target
+
+  - name: 2d_3d_mixing
+    signal: "ERROR: linear_extrude or offset applied to 3D geometry"
+    fix: "linear_extrude and offset are 2D only; radians() doesn't exist in OpenSCAD — compute inline"
+    edit: target
+
+  - name: unintentional_feature
+    signal: "a notch, gap, or protrusion that looks like broken geometry rather than a design decision"
+    fix: "redesign feature with smooth transitions, fillets, and centered placement so it looks deliberate"
+    edit: target
